@@ -32,7 +32,7 @@
 1. **Клонируйте репозиторий:**
 ```bash
 git clone <repository-url>
-cd flowParser
+cd WikiParser
 ```
 
 2. **Создайте файл конфигурации:**
