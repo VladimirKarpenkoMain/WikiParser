@@ -2,7 +2,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from g4f.client import AsyncClient
+import g4f.models
+from g4f.client import AsyncClient as AsyncGPTClient
 from pydantic import UUID4
 
 import core.exceptions.articles as article_exceptions
@@ -46,7 +47,7 @@ class ArticleService(IArticleService):
         parent_id: Optional[UUID4] = None,
     ):
         """ Рекурсивно сохраняет дерево статей в БД """
-        logger.info("Saving article: %s", article.title)
+        logger.debug("Saving article: %s", article.title)
 
         article_data = ArticleCreateSchema(
             title=article.title,
@@ -134,22 +135,20 @@ class FreeGPTSummaryService(AbstractSummaryService):
         """ Генерирует краткое содержание текста """
         logger.info("Starting summary generation")
         try:
-            client = AsyncClient()
+            client = AsyncGPTClient()
             response = await client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {
-                        "role": "system",
-                        "content": "Составь краткое содержание (summary) следующего текста "
-                                   "на русском языке в 2–3 предложения. "
-                                   "В ответе выведи только само summary — без заголовков, без слова «Summary», "
-                                   "без каких-либо пояснений или дополнительных фраз.",
-                    },
-                    {"role": "user", "content": text[:settings.summary.max_text_length]},
+                    {"role": "user", "content": f"Ты - эксперт по созданию кратких содержаний. "
+                                                f"Только основная суть, без заголовков, без слова 'Summary', 'Краткое содержание' и т.п."
+                                                f"Создай краткое содержание этого текста в несколько предложений (3-6):"
+                                                f"\n\n{text[:settings.summary.max_text_length]}"},
                 ],
+                max_tokens=settings.summary.max_tokens,
+                temperature=settings.summary.temperature,
                 web_search=False,
             )
-            summary = response.choices[0].message.content
+            summary = response.choices[0].message.content.strip()
             logger.info(
                 "Summary successfully generated, length: %s characters", len(summary)
             )

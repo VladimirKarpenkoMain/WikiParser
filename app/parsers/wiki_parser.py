@@ -69,6 +69,10 @@ async def parse_wikipedia_article(
             links = content_div.find_all("a", href=True)
             logger.debug("Found %s links in article", len(links))
             for link in links:
+                if len(children) >= 5:
+                    logger.debug("Maximum number of child articles reached")
+                    break
+
                 href = link.get("href", "")
                 if (
                     isinstance(href, str)
@@ -76,6 +80,8 @@ async def parse_wikipedia_article(
                     and not any(x in href for x in [":", "#"])
                 ):
                     child_url = urljoin(base_url, href)
+                    if child_url in visited:
+                        continue
                     logger.debug("Processing child link: %s", child_url)
                     child_article = await parse_wikipedia_article(
                         child_url, depth - 1, client, visited
@@ -83,10 +89,6 @@ async def parse_wikipedia_article(
                     if child_article:
                         children.append(child_article)
                         logger.debug("Added child article: %s", child_article.title)
-                    if len(children) >= 5:
-                        logger.debug("Maximum number of child articles reached")
-                        break
-
         logger.info(
             "Successfully parsed article: %s with %s child articles",
             title,

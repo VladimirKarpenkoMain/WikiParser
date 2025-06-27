@@ -48,5 +48,4 @@ async def get_article_summary_endpoint(
         url=str(body_url.url),
         uow=uow,
     )
-    logger.info(f"Summary successfully retrieved for article: %s", result["title"])
     return GetSummaryResponse(**result)

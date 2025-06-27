@@ -42,6 +42,8 @@ class ParserConfig(BaseModel):
 class SummaryConfig(BaseModel):
     provider: Literal["free_gpt", "openai", "deepseek"] = "free_gpt"
     max_text_length: int = 3000
+    max_tokens: int = 200
+    temperature: float = 0.3
 
 
 class LoggerConfig(BaseModel):
